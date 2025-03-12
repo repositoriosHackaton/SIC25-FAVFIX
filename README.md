@@ -28,6 +28,14 @@ En el mundo digital de hoy, las personas comparten sus pensamientos y sentimient
 
 ## Arquitectura
 
+El proyecto Emotion Analyzer se basa en una arquitectura modular que permite la integración de diferentes componentes y tecnologías. A continuación, se describe la arquitectura general del proyecto:
+
+1.  **Recopilación de datos:** Se obtienen datos de diversas fuentes, como Kaggle, Twitter y fuentes gubernamentales.
+2.  **Preprocesamiento de datos:** Se realiza una limpieza y transformación de los datos para prepararlos para el entrenamiento de los modelos.
+3.  **Entrenamiento de modelos:** Se utilizan algoritmos de aprendizaje automático, como Regresión Lineal, Naive Bayes y SVM, para entrenar modelos de detección de emociones y depresión.
+4.  **Desarrollo de la API:** Se crea una API utilizando FastAPI para exponer los modelos entrenados y permitir su integración con otras aplicaciones.
+5.  **Desarrollo de la interfaz web:** Se desarrolla una interfaz web interactiva utilizando Reflex para permitir a los usuarios ingresar texto y obtener una predicción en tiempo real.
+
 [![Arquitectura del Proyecto]()]()
 
 ## Proceso
@@ -63,6 +71,14 @@ Incluimos análisis estadísticos y gráficos para entender mejor la distribuci�
 [![Estadísticos]()]()
 
 ## Funcionalidades
+
+El proyecto Emotion Analyzer ofrece las siguientes funcionalidades:
+
+*   **Análisis de emociones en textos:** Permite identificar y clasificar las emociones presentes en un texto dado.
+*   **Detección de depresión:** Permite detectar la presencia de depresión en un texto dado.
+*   **Relación entre depresión y empleo:** Permite analizar la relación entre la depresión y la tasa de empleo y desempleo pre y post pandemia de COVID-19.
+*   **Predicción en tiempo real:** Permite a los usuarios ingresar texto y obtener una predicción en tiempo real a través de la interfaz web.
+*   **API para integración:** Proporciona una API para integrar los modelos entrenados con otras aplicaciones.
 
 ### Entrenamiento de los modelos
 
