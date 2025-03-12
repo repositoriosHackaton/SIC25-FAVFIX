@@ -1,38 +1,42 @@
+import os
 import pickle
 import numpy as np
 import string
 from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer
 
+# Imprimir el directorio de trabajo actual
+print("Current working directory:", os.getcwd())
+
 # Cargar los modelos entrenados y los vectorizadores
-with open('modelos/modelo_sentimientos_regresin_logstica.pkl', 'rb') as f:
+with open('modelo_sentimientos_regresin_logstica.pkl', 'rb') as f:
     sentiment_model_log_reg = pickle.load(f)
 
-with open('modelos/modelo_sentimientos_naive_bayes.pkl', 'rb') as f:
+with open('modelo_sentimientos_naive_bayes.pkl', 'rb') as f:
     sentiment_model_nb = pickle.load(f)
 
-with open('modelos/modelo_sentimientos_random_forest_random_forest.pkl', 'rb') as f:
+with open('modelo_sentimientos_random_forest_random_forest.pkl', 'rb') as f:
     sentiment_model_rf = pickle.load(f)
 
-with open('modelos/modelo_sentimientos_xgboost_xgboost.pkl', 'rb') as f:
+with open('modelo_sentimientos_xgboost_xgboost.pkl', 'rb') as f:
     sentiment_model_xgb = pickle.load(f)
 
-with open('modelos/modelo_depresion_regresin_logstica.pkl', 'rb') as f:
+with open('modelo_depresion_regresin_logstica.pkl', 'rb') as f:
     suicide_model_log_reg = pickle.load(f)
 
-with open('modelos/modelo_depresion_naive_bayes.pkl', 'rb') as f:
+with open('modelo_depresion_naive_bayes.pkl', 'rb') as f:
     suicide_model_nb = pickle.load(f)
 
-with open('modelos/modelo_depresion_random_forest_random_forest.pkl', 'rb') as f:
+with open('modelo_depresion_random_forest_random_forest.pkl', 'rb') as f:
     suicide_model_rf = pickle.load(f)
 
-with open('modelos/modelo_depresion_xgboost_xgboost.pkl', 'rb') as f:
+with open('modelo_depresion_xgboost_xgboost.pkl', 'rb') as f:
     suicide_model_xgb = pickle.load(f)
 
-with open('modelos/tfidf_vectorizador_sentimientos.pkl', 'rb') as f:
+with open('tfidf_vectorizador_sentimientos.pkl', 'rb') as f:
     tfidf_vectorizer_sentiment = pickle.load(f)
 
-with open('modelos/tfidf_vectorizador_depresion.pkl', 'rb') as f:
+with open('tfidf_vectorizador_depresion.pkl', 'rb') as f:
     tfidf_vectorizer_suicide = pickle.load(f)
 
 stop_words_english = stopwords.words('english')
