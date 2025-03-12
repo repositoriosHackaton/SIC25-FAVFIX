@@ -1,6 +1,7 @@
 import reflex as rx
-from .pages import admin_page, users_page, messages_page, settings_page
-from .user_input_page import user_input_page  # Importar la nueva página
+from .pages import admin_page, messages_page, settings_page
+from .user_input_page import user_input_page
+from .users_page import users_page
 
 # Configuración de la aplicación
 app = rx.App()

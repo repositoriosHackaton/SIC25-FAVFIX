@@ -1,177 +1,139 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Depends
 from pydantic import BaseModel
-import pickle
-import numpy as np
-import string
-from nltk.corpus import stopwords
-from nltk.stem import WordNetLemmatizer
-import sqlite3
-import httpx
+from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy import create_engine, Column, Integer, String, Float, DateTime
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker, Session
+from sqlalchemy import func
+from datetime import datetime, timedelta
 
-# Inicializar FastAPI
 app = FastAPI()
 
-# Cargar los modelos entrenados y los vectorizadores
-with open('modelos/modelo_sentimientos_regresin_logstica.pkl', 'rb') as f:
-    sentiment_model_log_reg = pickle.load(f)
+# Configuración de CORS (como antes)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
-with open('modelos/modelo_sentimientos_naive_bayes.pkl', 'rb') as f:
-    sentiment_model_nb = pickle.load(f)
+# Configuración de la base de datos (como antes)
+DATABASE_URL = "sqlite:///./test.db"
+engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+Base = declarative_base()
 
-with open('modelos/modelo_sentimientos_random_forest_random_forest.pkl', 'rb') as f:
-    sentiment_model_rf = pickle.load(f)
+class Prediction(Base):
+    __tablename__ = "predictions"
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, index=True)
+    age = Column(Integer)
+    gender = Column(String)
+    sector = Column(String)
+    text = Column(String)
+    result = Column(String)
+    emotion = Column(String)
+    suicide_probability = Column(Float)
+    timestamp = Column(DateTime, default=datetime.utcnow)  # Add timestamp
 
-with open('modelos/modelo_sentimientos_xgboost_xgboost.pkl', 'rb') as f:
-    sentiment_model_xgb = pickle.load(f)
+Base.metadata.create_all(bind=engine)
 
-with open('modelos/modelo_depresion_regresin_logstica.pkl', 'rb') as f:
-    suicide_model_log_reg = pickle.load(f)
-
-with open('modelos/modelo_depresion_naive_bayes.pkl', 'rb') as f:
-    suicide_model_nb = pickle.load(f)
-
-with open('modelos/modelo_depresion_random_forest_random_forest.pkl', 'rb') as f:
-    suicide_model_rf = pickle.load(f)
-
-with open('modelos/modelo_depresion_xgboost_xgboost.pkl', 'rb') as f:
-    suicide_model_xgb = pickle.load(f)
-
-with open('modelos/tfidf_vectorizador_sentimientos.pkl', 'rb') as f:
-    tfidf_vectorizer_sentiment = pickle.load(f)
-
-with open('modelos/tfidf_vectorizador_depresion.pkl', 'rb') as f:
-    tfidf_vectorizer_suicide = pickle.load(f)
-
-stop_words_english = stopwords.words('english')
-lemmatizer = WordNetLemmatizer()
-
-# Conexión a la base de datos
-def get_db_connection():
-    conn = sqlite3.connect('data/database.db')
-    conn.row_factory = sqlite3.Row
-    return conn
-
-# Crear la tabla de usuarios si no existe
-def create_table():
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS users (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT,
-            age INTEGER,
-            gender TEXT,
-            sector TEXT,
-            text TEXT,
-            result TEXT,
-            emotion TEXT,
-            suicide_probability REAL
-        )
-    ''')
-    conn.commit()
-    conn.close()
-
-# Preprocesar el texto
-def preprocess_text(text):
-    text = text.lower()
-    text = ''.join([char for char in text if char not in string.punctuation])
-    tokens = text.split()
-    tokens = [word for word in tokens if word not in stop_words_english]
-    tokens = [lemmatizer.lemmatize(word) for word in tokens]
-    return ' '.join(tokens)
-
-# Modelo de entrada
-class TextoEntrada(BaseModel):
+class PredictionRequest(BaseModel):
     name: str
     age: int
     gender: str
     sector: str
     text: str
+    result: str = None
+    emotion: str = None
+    suicide_probability: float = None
 
-# Endpoint para predecir y guardar en la base de datos
+# Dependency to get the database session
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
 @app.post("/predecir")
-def predecir_tendencia_y_emocion(texto_entrada: TextoEntrada):
-    try:
-        # Preprocesar el texto de entrada
-        texto_procesado = preprocess_text(texto_entrada.text)
-        
-        # Vectorizar el texto
-        texto_vectorizado_sentiment = tfidf_vectorizer_sentiment.transform([texto_procesado])
-        texto_vectorizado_suicide = tfidf_vectorizer_suicide.transform([texto_procesado])
-        
-        # Realizar las predicciones con todos los modelos de suicidio excepto SVM
-        probabilidades_suicidio = []
-        for modelo in [suicide_model_log_reg, suicide_model_nb, suicide_model_rf, suicide_model_xgb]:
-            probabilidad = modelo.predict_proba(texto_vectorizado_suicide)
-            probabilidades_suicidio.append(probabilidad[0])
-        
-        probabilidad_promedio_suicidio = np.mean(probabilidades_suicidio, axis=0)
-        
-        umbral = 0.5
-        prediccion_suicidio = "suicidio" if probabilidad_promedio_suicidio[1] >= umbral else "no suicidio"
-        
-        # Realizar las predicciones con todos los modelos de emociones excepto SVM
-        emociones_predichas = []
-        for modelo in [sentiment_model_log_reg, sentiment_model_nb, sentiment_model_rf, sentiment_model_xgb]:
-            emocion_predicha = modelo.predict(texto_vectorizado_sentiment)[0]
-            emociones_predichas.append(emocion_predicha)
-        
-        emocion_final = max(set(emociones_predichas), key=emociones_predichas.count)
-        emociones = ["Tristeza", "Alegría", "Amor", "Enojo", "Miedo", "Sorpresa"]
-        emocion_texto = emociones[emocion_final]
-        
-        # Guardar en la base de datos
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        cursor.execute('''
-            INSERT INTO users (name, age, gender, sector, text, result, emotion, suicide_probability)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-        ''', (
-            texto_entrada.name,
-            texto_entrada.age,
-            texto_entrada.gender,
-            texto_entrada.sector,
-            texto_entrada.text,
-            prediccion_suicidio,
-            emocion_texto,
-            float(probabilidad_promedio_suicidio[1])
-        ))
-        conn.commit()
-        conn.close()
-        
-        return {
-            "prediccion_suicidio": prediccion_suicidio,
-            "probabilidad_suicidio": probabilidad_promedio_suicidio[1],
-            "emocion": emocion_texto
-        }
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+async def predecir(data: PredictionRequest, db: Session = Depends(get_db)):
+    # Guardar los datos en la base de datos
+    prediction = Prediction(
+        name=data.name,
+        age=data.age,
+        gender=data.gender,
+        sector=data.sector,
+        text=data.text,
+        result=data.result,
+        emotion=data.emotion,
+        suicide_probability=data.suicide_probability,
+    )
+    db.add(prediction)
+    db.commit()
+    db.refresh(prediction)
 
-# Endpoint para obtener todos los usuarios
-@app.get("/users")
-def get_users():
-    try:
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        cursor.execute('SELECT * FROM users')
-        users = cursor.fetchall()
-        conn.close()
-        return {"users": users}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    return {"message": "Data received", "data": data.dict()}
 
-# Endpoint para realizar una solicitud asíncrona
-@app.get("/fetch_users")
-async def fetch_users():
-    try:
-        async with httpx.AsyncClient(timeout=5.0) as client:
-            response = await client.get("http://localhost:8000/users")
-            if response.status_code == 200:
-                return response.json()
-            else:
-                raise HTTPException(status_code=response.status_code, detail="Error fetching users")
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+class EmotionData(BaseModel):
+    emotion: str
+    count: int
+    time: datetime
 
-# Crear la tabla al iniciar la API
-create_table()
+@app.get("/emotions_over_time", response_model=list[EmotionData])
+async def get_emotions_over_time(time_interval: int = 60, db: Session = Depends(get_db)):  # time_interval in minutes
+    """
+    Retrieves emotion data aggregated over a specified time interval.
+    """
+    time_threshold = datetime.utcnow() - timedelta(minutes=time_interval)
+
+    # Query to count emotions within the time interval
+    emotions_data = db.query(
+        Prediction.emotion,
+        func.count(Prediction.emotion),
+        func.strftime('%Y-%m-%d %H:%M:00', Prediction.timestamp)  # Truncate to minute
+    ).filter(Prediction.timestamp >= time_threshold).group_by(
+        Prediction.emotion,
+        func.strftime('%Y-%m-%d %H:%M', Prediction.timestamp)  # Group by minute
+    ).all()
+
+    # Format the results
+    result = []
+    for emotion, count, time in emotions_data:
+        result.append({"emotion": emotion, "count": count, "time": datetime.strptime(time, '%Y-%m-%d %H:%M:%S')})
+
+    return result
+
+class SectorSentiment(BaseModel):
+    sector: str
+    average_suicide_probability: float
+    time: datetime
+
+@app.get("/sentiment_by_sector", response_model=List[SectorSentiment])
+async def get_sentiment_by_sector(time_interval: int = 60, db: Session = Depends(get_db)):
+    """
+    Retrieves the average sentiment (suicide probability) by sector over a specified time interval.
+    """
+    time_threshold = datetime.utcnow() - timedelta(minutes=time_interval)
+
+    # Query to calculate the average suicide probability by sector
+    sector_sentiment_data = db.query(
+        Prediction.sector,
+        func.avg(Prediction.suicide_probability),
+        func.strftime('%Y-%m-%d %H:%M:00', Prediction.timestamp)  # Truncate to minute
+    ).filter(Prediction.timestamp >= time_threshold).group_by(
+        Prediction.sector,
+        func.strftime('%Y-%m-%d %H:%M', Prediction.timestamp)  # Group by minute
+    ).all()
+
+    # Format the results
+    result = []
+    for sector, avg_sentiment, time in sector_sentiment_data:
+        result.append({
+            "sector": sector,
+            "average_suicide_probability": avg_sentiment,
+            "time": datetime.strptime(time, '%Y-%m-%d %H:%M:%S')
+        })
+
+    return result
