@@ -6,6 +6,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, Session
 from sqlalchemy import func
 from datetime import datetime, timedelta
+from typing import List
 
 app = FastAPI()
 
@@ -110,7 +111,7 @@ class SectorSentiment(BaseModel):
     average_suicide_probability: float
     time: datetime
 
-@app.get("/sentiment_by_sector", response_model=List[SectorSentiment])
+@app.get("/sentiment_by_sector", response_model=list[SectorSentiment])
 async def get_sentiment_by_sector(time_interval: int = 60, db: Session = Depends(get_db)):
     """
     Retrieves the average sentiment (suicide probability) by sector over a specified time interval.
@@ -132,7 +133,7 @@ async def get_sentiment_by_sector(time_interval: int = 60, db: Session = Depends
     for sector, avg_sentiment, time in sector_sentiment_data:
         result.append({
             "sector": sector,
-            "average_suicide_probability": avg_sentiment,
+            "average_suicide_probability": float(avg_sentiment),
             "time": datetime.strptime(time, '%Y-%m-%d %H:%M:%S')
         })
 

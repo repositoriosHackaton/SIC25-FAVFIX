@@ -60,9 +60,14 @@ class UsersState(rx.State):
         finally:
             self.is_loading = False
 
-    def set_time_interval(self, interval: int):
+    def set_time_interval(self, interval: str):  # Cambia el tipo a str
         """Establece el intervalo de tiempo y actualiza los datos."""
-        self.time_interval = interval
+        try:
+            interval_int = int(interval)  # Intenta convertir a entero
+            self.time_interval = interval_int
+        except ValueError:
+            print(f"Error: Invalid time interval value: {interval}")
+            return  # No actualices si no es un entero válido
         # rx.console.log(f"Intervalo de tiempo establecido en: {self.time_interval}") #debugging
         return [self.fetch_emotion_data, self.fetch_sector_sentiment_data]  # Devuelve ambos manejadores de eventos
 
@@ -78,8 +83,7 @@ def emotion_chart():
                 fill=rx.color("blue", 4),
             ),
             rx.recharts.x_axis(
-                data_key="time",
-                tick_formatter=lambda x: datetime.fromisoformat(x).strftime("%H:%M"),  # Formatea la hora
+                data_key="time",  # Asegúrate de que "time" sea el nombre correcto de la columna
                 angle=-45,
                 text_anchor="end",
                 height=80,  # Ajusta la altura para las etiquetas rotadas
@@ -88,7 +92,7 @@ def emotion_chart():
                 type="number",
                 domain=[0, 'dataMax + 1']  # Dominio dinámico del eje Y
             ),
-            rx.recharts.tooltip(),
+            rx.recharts.graphing_tooltip(),  # Usa graphing_tooltip en lugar de tooltip
             rx.recharts.cartesian_grid(horizontal=False, vertical=True),
             data=UsersState.emotion_data,
         ),
@@ -105,8 +109,7 @@ def sector_sentiment_chart():
                 stroke=rx.color("green", 5),
             ),
             rx.recharts.x_axis(
-                data_key="time",
-                tick_formatter=lambda x: datetime.fromisoformat(x).strftime("%H:%M"),  # Formatea la hora
+                data_key="time",  # Asegúrate de que "time" sea el nombre correcto de la columna
                 angle=-45,
                 text_anchor="end",
                 height=80,  # Ajusta la altura para las etiquetas rotadas
@@ -115,7 +118,7 @@ def sector_sentiment_chart():
                 type="number",
                 domain=[0, 1]  # El dominio de la probabilidad de suicidio es entre 0 y 1
             ),
-            rx.recharts.tooltip(),
+            rx.recharts.graphing_tooltip(),  # Usa graphing_tooltip en lugar de tooltip
             rx.recharts.cartesian_grid(horizontal=False, vertical=True),
             data=UsersState.sector_sentiment_data,
         ),
@@ -127,9 +130,10 @@ def users_page():
         rx.heading("Análisis de Usuarios", font_size="2em"),
         rx.hstack(
             rx.text("Intervalo de Tiempo (minutos):"),
-            rx.number_input(
+            rx.input(  # Usa rx.input con type="number"
                 value=UsersState.time_interval,
                 on_change=UsersState.set_time_interval,
+                type="number",  # Especifica el tipo como "number"
                 min=1,
                 max=1440,  # Hasta 24 horas
             ),
