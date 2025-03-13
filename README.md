@@ -1,6 +1,6 @@
-# Emotion Analyzer
+# Analista de emociones en entornos laborales
 
-Emotion Analyzer es una herramienta innovadora diseñada para analizar emociones en textos y detectar comportamientos basados en las emociones identificadas. Actualmente, estamos enfocados en la detección de depresión y su relación con la tasa de empleo y desempleo pre y post pandemia de COVID-19, con el objetivo de identificar patrones y coincidencias entre la salud mental y el mercado laboral. 
+es una herramienta innovadora diseñada para analizar emociones en textos y detectar comportamientos basados en las emociones identificadas. Actualmente, estamos enfocados en la detección de depresión y su relación con la tasa de empleo y desempleo pre y post pandemia de COVID-19, con el objetivo de identificar patrones y coincidencias entre la salud mental y el mercado laboral. 
 
 ## Tabla de contenidos
 
@@ -14,11 +14,11 @@ Emotion Analyzer es una herramienta innovadora diseñada para analizar emociones
 
 ## Nombre
 
-Emotion Analyzer
+Analista de emociones en entornos laborales
 
 ## Descripción
 
-Emotion Analyzer es una aplicación que utiliza técnicas avanzadas de procesamiento de lenguaje natural (NLP) para analizar publicaciones, comentarios y otros textos. La idea es proporcionar una herramienta que pueda ser utilizada en foros, redes sociales y otras plataformas para identificar emociones subyacentes, especialmente la depresión, y su relación con la tasa de empleo y desempleo pre y post pandemia de COVID-19.
+El Analista de emociones  es una aplicación que utiliza técnicas avanzadas de procesamiento de lenguaje natural (NLP) para analizar publicaciones, comentarios y otros textos. La idea es proporcionar una herramienta que pueda ser utilizada en foros, redes sociales y otras plataformas para identificar emociones subyacentes, especialmente la depresión, y su relación con la tasa de empleo y desempleo pre y post pandemia de COVID-19.
 
 ### ¿Por qué es importante?
 
@@ -28,7 +28,7 @@ En el mundo digital de hoy, las personas comparten sus pensamientos y sentimient
 
 ## Arquitectura
 
-El proyecto Emotion Analyzer se basa en una arquitectura modular que permite la integración de diferentes componentes y tecnologías. A continuación, se describe la arquitectura general del proyecto:
+El proyecto se basa en una arquitectura modular que permite la integración de diferentes componentes y tecnologías. A continuación, se describe la arquitectura general del proyecto:
 
 1.  **Recopilación de datos:** Se obtienen datos de diversas fuentes, como Kaggle, Twitter y fuentes gubernamentales.
 2.  **Preprocesamiento de datos:** Se realiza una limpieza y transformación de los datos para prepararlos para el entrenamiento de los modelos.
